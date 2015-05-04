@@ -152,63 +152,63 @@ class ContentFacebookGallery extends \ContentElement
 
 		// go through each facebook image
 		foreach( $result->data as $fbImg )
-	   	{
-	   		// get the image source and megapixel
-	   		$fullSrc = $fbImg->source;
-	   		$fullMp = $fbimg->width * $fbimg->height;
-	   		$fullWidth = $fbimg->width;
-	   		$fullHeight = $fbimg->height;
+		{
+			// get the image source and megapixel
+			$fullSrc = $fbImg->source;
+			$fullMp = $fbimg->width * $fbimg->height;
+			$fullWidth = $fbimg->width;
+			$fullHeight = $fbimg->height;
 
-	   		// set the thumb source to the original image source
-	   		$thumbSrc = $fullSrc;
-	   		$thumbWidth = $fullWidth;
-	   		$thumbHeight = $fullHeight;
+			// set the thumb source to the original image source
+			$thumbSrc = $fullSrc;
+			$thumbWidth = $fullWidth;
+			$thumbHeight = $fullHeight;
 
-	   		// check if there is additional image data
-	   		if( is_array( $fbImg->images ) )
-	   		{
-	   			$imgs = array();
+			// check if there is additional image data
+			if( is_array( $fbImg->images ) )
+			{
+				$imgs = array();
 
-	   			foreach( $fbImg->images as $img )
-	   			{
-	   				$mp = $img->width * $img->height;
+				foreach( $fbImg->images as $img )
+				{
+					$mp = $img->width * $img->height;
 
-	   				if( $mp > $fullMp )
-	   				{
-	   					$fullSrc = $img->source;
-	   				   	$fullMp = $mp;
-				   		$fullWidth = $img->width;
-				   		$fullHeight = $img->height;	
-	   				}
+					if( $mp > $fullMp )
+					{
+						$fullSrc = $img->source;
+						$fullMp = $mp;
+						$fullWidth = $img->width;
+						$fullHeight = $img->height;	
+					}
 
-	   				$imgs[ $mp ] = $img;
-	   			}
+					$imgs[ $mp ] = $img;
+				}
 
-	   			if( $useThumb )
-	   			{
-		   			ksort( $imgs );
+				if( $useThumb )
+				{
+					ksort( $imgs );
 
-		   			foreach( $imgs as $img )
-		   			{
-		   				if( $img->width > $size[0] && $img->height > $size[1] )
-		   				{
-		   					$thumbSrc = $img->source;
-		   					$thumbWidth = $img->width;
-		   					$thumbHeight = $img->height;
-		   					break;
-		   				}
-		   			}
-		   		}
-	   		}
+					foreach( $imgs as $img )
+					{
+						if( $img->width > $size[0] && $img->height > $size[1] )
+						{
+							$thumbSrc = $img->source;
+							$thumbWidth = $img->width;
+							$thumbHeight = $img->height;
+							break;
+						}
+					}
+				}
+			}
 
-	   		$images[] = array
-	   		(
-	   			'href'   => $fullSrc,
-	   			'src'    => $useThumb ? $thumbSrc : $fullSrc,
-	   			'width'  => $useThumb ? $thumbWidth : $fullWidth,
-	   			'height' => $useThumb ? $thumbHeight : $fullHeight
-	   		);
-	   	}
+			$images[] = array
+			(
+				'href'   => $fullSrc,
+				'src'    => $useThumb ? $thumbSrc : $fullSrc,
+				'width'  => $useThumb ? $thumbWidth : $fullWidth,
+				'height' => $useThumb ? $thumbHeight : $fullHeight
+			);
+		}
 
 		$rowcount = 0;
 		$colwidth = floor(100/$this->perRow);
