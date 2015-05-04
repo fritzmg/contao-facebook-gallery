@@ -86,7 +86,7 @@ class ContentFacebookGallery extends \ContentElement
 		for( $i = 0; $i < 100; ++$i )
 		{
 			// get result
-			$result = json_decode( file_get_contents( $graphUrl . '?limit=50&fields=id&offset=' . $i * 50 ) );
+			$result = json_decode( file_get_contents( $graphUrl . '?limit=100&fields=id&offset=' . $i * 100 ) );
 
 			// check for result
 			if( !$result )
@@ -97,7 +97,7 @@ class ContentFacebookGallery extends \ContentElement
 
 			// break if count is zero
 			if( count( $result->data ) == 0 )
-				break;		
+				break;
 		}
 
 		// limit the total number of items

@@ -31,7 +31,8 @@ class tl_content_facebook_gallery extends Backend
 {
 	public function ppLoadCallback( $varValue, DataContainer $dc )
 	{
-		if( $varValue ==  0 && $dc->activeRecord->type == 'facebookGallery' )
+		// we can't fetch more than 100 images for one page
+		if( ( $varValue <= 0 || $varValue > 100 ) && $dc->activeRecord->type == 'facebookGallery' )
 			return 100;
 
 		return $varValue;
