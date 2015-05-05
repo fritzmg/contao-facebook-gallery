@@ -70,45 +70,41 @@ class ContentFacebookGallery extends \ContentElement
 	{
 		global $objPage;
 
+		// prepare images array
 		$images = array();
 
 		// check if we have an album id
 		if( !$this->strAlbumId )
 			return;
 
-		// build graph URL
-		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos';
+		// build graph URL (fetch as much images as possible)
+		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000';
 
-		// initialize total
-		$total = 0;
-
-		// determine the maximum number of images
-		for( $i = 0; $i < 100; ++$i )
+		do
 		{
 			// get result
-			$result = json_decode( file_get_contents( $graphUrl . '?limit=100&fields=id&offset=' . $i * 100 ) );
+			$result = json_decode( file_get_contents( $graphUrl . '&offset=' . count( $images ) ) );
 
 			// check for result
 			if( !$result )
-				break;
+				return;
 
-			// increase total amount of images
-			$total += count( $result->data );
+			// merge images
+			$images = array_merge( $images, $result->data );
+		}
+		while( $result->paging->next );
 
-			// break if count is zero
-			if( count( $result->data ) == 0 )
-				break;
+		// Limit the total number of items
+		if ($this->numberOfItems > 0)
+		{
+			$images = array_slice($images, 0, $this->numberOfItems);
 		}
 
-		// limit the total number of items
-		if( $this->numberOfItems > 0 )
-			$total = min( $total, $this->numberOfItems );
-
-		// prepare pagination and graph url
 		$offset = 0;
+		$total = count($images);
 		$limit = $total;
 
-		// pagination
+		// Pagination
 		if ($this->perPage > 0)
 		{
 			// Get the current page
@@ -133,81 +129,6 @@ class ContentFacebookGallery extends \ContentElement
 
 			$objPagination = new \Pagination($total, $this->perPage, $GLOBALS['TL_CONFIG']['maxPaginationLinks'], $id);
 			$this->Template->pagination = $objPagination->generate("\n  ");
-
-			$graphUrl.= '?limit=' . $this->perPage . '&offset=' . $offset;
-		}
-
-		// retrieve album from facebook
-		$result = json_decode( file_get_contents( $graphUrl ) );
-
-		// check for valid result
-		if( !$result )
-			return;   
-
-		// get the size
-		$size = deserialize( $this->size );
-
-		// whether to use thumbnails
-		$useThumb =  $size[0] > 0 || $size[1] > 0;
-
-		// go through each facebook image
-		foreach( $result->data as $fbImg )
-		{
-			// get the image source and megapixel
-			$fullSrc = $fbImg->source;
-			$fullMp = $fbimg->width * $fbimg->height;
-			$fullWidth = $fbimg->width;
-			$fullHeight = $fbimg->height;
-
-			// set the thumb source to the original image source
-			$thumbSrc = $fullSrc;
-			$thumbWidth = $fullWidth;
-			$thumbHeight = $fullHeight;
-
-			// check if there is additional image data
-			if( is_array( $fbImg->images ) )
-			{
-				$imgs = array();
-
-				foreach( $fbImg->images as $img )
-				{
-					$mp = $img->width * $img->height;
-
-					if( $mp > $fullMp )
-					{
-						$fullSrc = $img->source;
-						$fullMp = $mp;
-						$fullWidth = $img->width;
-						$fullHeight = $img->height;	
-					}
-
-					$imgs[ $mp ] = $img;
-				}
-
-				if( $useThumb )
-				{
-					ksort( $imgs );
-
-					foreach( $imgs as $img )
-					{
-						if( $img->width > $size[0] && $img->height > $size[1] )
-						{
-							$thumbSrc = $img->source;
-							$thumbWidth = $img->width;
-							$thumbHeight = $img->height;
-							break;
-						}
-					}
-				}
-			}
-
-			$images[] = array
-			(
-				'href'   => $fullSrc,
-				'src'    => $useThumb ? $thumbSrc : $fullSrc,
-				'width'  => $useThumb ? $thumbWidth : $fullWidth,
-				'height' => $useThumb ? $thumbHeight : $fullHeight
-			);
 		}
 
 		$rowcount = 0;
@@ -217,8 +138,7 @@ class ContentFacebookGallery extends \ContentElement
 		$body = array();
 
 		// Rows
-		$maxItems = min( $this->perPage, $total - $offset );
-		for( $i = 0; $i < $maxItems; $i = ( $i + $this->perRow ) )
+		for ($i=$offset; $i<$limit; $i=($i+$this->perRow))
 		{
 			$class_tr = '';
 
@@ -235,10 +155,8 @@ class ContentFacebookGallery extends \ContentElement
 			$class_eo = (($rowcount % 2) == 0) ? ' even' : ' odd';
 
 			// Columns
-			for( $j = 0; $j < $this->perRow; ++$j )
+			for ($j=0; $j<$this->perRow; ++$j)
 			{
-				$img = $images[($i+$j)];
-
 				$class_td = '';
 
 				if ($j == 0)
@@ -255,7 +173,7 @@ class ContentFacebookGallery extends \ContentElement
 				$key = 'row_' . $rowcount . $class_tr . $class_eo;
 
 				// Empty cell
-				if (!is_array($img) || ($j+$i) >= $maxItems)
+				if (!is_object($images[($i+$j)]) || ($j+$i) >= $limit)
 				{
 					$objCell->colWidth = $colwidth . '%';
 					$objCell->class = 'col_'.$j . $class_td;
@@ -266,7 +184,8 @@ class ContentFacebookGallery extends \ContentElement
 					$objCell->colWidth = $colwidth . '%';
 					$objCell->class = 'col_'.$j . $class_td;
 
-					// set parameters for gallery
+					// process image and set parameters for gallery
+					$img = $this->processImage( $images[($i+$j)], $intMaxWidth );
 					$objCell->src = $img['src'];
 					$objCell->href = $img['href'];
 					$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
@@ -298,5 +217,84 @@ class ContentFacebookGallery extends \ContentElement
 		$objTemplate->headline = $this->headline; // see #1603
 
 		$this->Template->images = $objTemplate->parse();
+	}
+
+
+	/**
+	 * Processes the facebook image object and returns src, href, width and height
+	 * @param object
+	 * @return array
+	 */
+	private function processImage( $objImage, $maxWidth = 0 )
+	{
+		// get the image source and megapixel
+		$fullSrc = $objImage->source;
+		$fullMp = $objImage->width * $objImage->height;
+		$fullWidth = $objImage->width;
+		$fullHeight = $objImage->height;
+
+		// set the thumb source to the original image source
+		$thumbSrc = $fullSrc;
+		$thumbWidth = $fullWidth;
+		$thumbHeight = $fullHeight;
+
+		// determine the minimum thumb width and height
+		$size = deserialize( $this->size );
+
+		// extract size
+		$intWidth  = $size[0];
+		$intHeight = $size[1];
+
+		// check for maximum width
+		if( $intWidth > 0 )
+			$intWidth = min( $intWidth, $maxWidth );
+
+		// whether to use thumbnails
+		$useThumb =  $intWidth > 0 || $intHeight > 0;
+
+		// check if there is additional image data
+		if( is_array( $objImage->images ) )
+		{
+			$imgs = array();
+
+			foreach( $objImage->images as $img )
+			{
+				$mp = $img->width * $img->height;
+
+				if( $mp > $fullMp )
+				{
+					$fullSrc = $img->source;
+					$fullMp = $mp;
+					$fullWidth = $img->width;
+					$fullHeight = $img->height;	
+				}
+
+				$imgs[ $mp ] = $img;
+			}
+
+			if( $useThumb )
+			{
+				ksort( $imgs );
+
+				foreach( $imgs as $img )
+				{
+					if( $img->width > $size[0] && $img->height > $size[1] )
+					{
+						$thumbSrc = $img->source;
+						$thumbWidth = $img->width;
+						$thumbHeight = $img->height;
+						break;
+					}
+				}
+			}
+		}
+
+		return array
+		(
+			'href'   => $fullSrc,
+			'src'    => $useThumb ? $thumbSrc : $fullSrc,
+			'width'  => $useThumb ? $thumbWidth : $fullWidth,
+			'height' => $useThumb ? $thumbHeight : $fullHeight
+		);
 	}
 }
