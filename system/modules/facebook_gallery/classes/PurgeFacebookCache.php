@@ -71,7 +71,7 @@ class PurgeFacebookCache extends \Backend implements \executable
 		}
 
 		// Add log entry
-		$this->log('Purged facebook cache directory', __METHOD__, TL_CRON);
+		$this->log('Purged the facebook cache', __METHOD__, TL_CRON);
 
 		return $total;
 	}
