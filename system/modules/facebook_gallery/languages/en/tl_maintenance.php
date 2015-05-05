@@ -13,11 +13,4 @@
  */
 
 
-/**
- * Register the classes
- */
-ClassLoader::addClasses(array
-(
-	'Contao\ContentFacebookGallery' => 'system/modules/facebook_gallery/elements/ContentFacebookGallery.php',
-	'Contao\PurgeFacebookCache'     => 'system/modules/facebook_gallery/classes/PurgeFacebookCache.php'
-));
+$GLOBALS['TL_LANG']['tl_maintenance_jobs']['facebook'] = array('Purge Facebook cache','Removes all Facebook Open Graph cache files.');

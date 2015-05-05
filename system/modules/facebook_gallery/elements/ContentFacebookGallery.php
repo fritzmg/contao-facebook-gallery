@@ -39,6 +39,13 @@ class ContentFacebookGallery extends \ContentElement
 
 
 	/**
+	 * Image cache file path
+	 * @var string
+	 */
+	protected $strCacheFile = '';
+
+
+	/**
 	 * Return if there are no files
 	 * @return string
 	 */
@@ -59,6 +66,9 @@ class ContentFacebookGallery extends \ContentElement
 		// set type to gallery
 		$this->type = 'gallery';
 
+		// set the path to the cache file
+		$this->strCacheFile = 'system/cache/facebook/' . $this->strAlbumId . '.json';
+
 		return parent::generate();
 	}
 
@@ -70,29 +80,16 @@ class ContentFacebookGallery extends \ContentElement
 	{
 		global $objPage;
 
-		// prepare images array
-		$images = array();
-
 		// check if we have an album id
 		if( !$this->strAlbumId )
 			return;
 
-		// build graph URL (fetch as much images as possible)
-		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000';
+		// prepare images array
+		$images = $this->getImages();
 
-		do
-		{
-			// get result
-			$result = json_decode( file_get_contents( $graphUrl . '&offset=' . count( $images ) ) );
-
-			// check for result
-			if( !$result )
-				return;
-
-			// merge images
-			$images = array_merge( $images, $result->data );
-		}
-		while( $result->paging->next );
+		// if there are no images, do nothing
+		if( count( $images ) == 0 )
+			return;
 
 		// Limit the total number of items
 		if ($this->numberOfItems > 0)
@@ -192,7 +189,7 @@ class ContentFacebookGallery extends \ContentElement
 					$objCell->margin = static::generateMargin( deserialize( $this->imagemargin ) );
 					$objCell->addImage = '1';
 
-					if( $img['fullsize'] )
+					if( $this->fullsize )
 						$objCell->attributes = ($objPage->outputFormat == 'xhtml') ? ' rel="' . $strLightboxId . '"' : ' data-lightbox="' . substr($strLightboxId, 9, -1) . '"';
 				}
 
@@ -217,6 +214,49 @@ class ContentFacebookGallery extends \ContentElement
 		$objTemplate->headline = $this->headline; // see #1603
 
 		$this->Template->images = $objTemplate->parse();
+	}
+
+
+	/**
+	 * Returns images from either the cache or directly from the public facebook graph
+	 * @return array
+	 */
+	private function getImages()
+	{
+		// return the cached result if available
+		$objFile = new \File( $this->strCacheFile );
+		$images = json_decode( $objFile->getContent() );
+		if( is_array( $images ) )
+			return $images;
+
+		// prepare images array
+		$images = array();
+
+		// build graph URL (fetch as much images as possible)
+		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000';
+
+		do
+		{
+			// get result
+			$result = json_decode( file_get_contents( $graphUrl ) );
+
+			// check for result
+			if( !$result )
+				break;
+
+			// merge images
+			$images = array_merge( $images, $result->data );
+
+			// get the next page
+			$graphUrl = $result->paging->next;
+		}
+		while( $result->paging->next );
+
+		// cache into file
+		$objFile->write( json_encode( $images ) );
+
+		// return images
+		return $images;
 	}
 
 

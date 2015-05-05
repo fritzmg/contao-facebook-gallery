@@ -17,3 +17,13 @@
  * Content elements
  */
 $GLOBALS['TL_CTE']['media']['facebookGallery'] = 'ContentFacebookGallery';
+
+
+/**
+ * Maintenance
+ */
+$GLOBALS['TL_PURGE']['folders']['facebook'] = array
+(
+	'affected' => array('system/cache/facebook'),
+	'callback' => array('PurgeFacebookCache','purge')
+);
