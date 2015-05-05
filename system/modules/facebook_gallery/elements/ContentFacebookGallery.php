@@ -286,8 +286,7 @@ class ContentFacebookGallery extends \ContentElement
 		$intHeight = $size[1];
 
 		// check for maximum width
-		if( $intWidth > 0 )
-			$intWidth = min( $intWidth, $maxWidth );
+		$intWidth = $intWidth > 0 ? min( $intWidth, $maxWidth ) : $maxWidth;
 
 		// whether to use thumbnails
 		$useThumb =  $intWidth > 0 || $intHeight > 0;
