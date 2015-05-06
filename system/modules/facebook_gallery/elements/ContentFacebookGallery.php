@@ -322,7 +322,7 @@ class ContentFacebookGallery extends \ContentElement
 
 				foreach( $imgs as $img )
 				{
-					if( $img->width > $minWidth && $img->height > $minHeight )
+					if( $img->width >= $minWidth && $img->height >= $minHeight )
 					{
 						$thumbSrc = $img->source;
 						$thumbWidth = $img->width;
