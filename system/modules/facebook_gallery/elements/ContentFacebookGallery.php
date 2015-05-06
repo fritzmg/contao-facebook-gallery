@@ -66,6 +66,11 @@ class ContentFacebookGallery extends \ContentElement
 		// set type to gallery
 		$this->type = 'gallery';
 
+		// add CSS class
+		$arrClasses = $this->cssID[1] ? explode( ' ', $this->cssID[1] ) : array();
+		$arrClasses[] = 'facebook';
+		$this->cssID = array( $this->cssID[0], implode( ' ', $arrClasses ) );
+
 		// set the path to the cache file
 		$this->strCacheFile = 'system/cache/facebook/' . $this->strAlbumId . '.json';
 
