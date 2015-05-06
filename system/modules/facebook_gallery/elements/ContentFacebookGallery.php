@@ -287,14 +287,14 @@ class ContentFacebookGallery extends \ContentElement
 		$size = deserialize( $this->size );
 
 		// extract size
-		$intWidth  = $size[0];
-		$intHeight = $size[1];
+		$minWidth  = $size[0];
+		$minHeight = $size[1];
 
 		// check for maximum width
-		$intWidth = $intWidth > 0 ? min( $intWidth, $maxWidth ) : $maxWidth;
+		$minWidth = $minWidth > 0 ? min( $minWidth, $maxWidth ) : $maxWidth;
 
 		// whether to use thumbnails
-		$useThumb =  $intWidth > 0 || $intHeight > 0;
+		$useThumb =  $minWidth > 0 || $minHeight > 0;
 
 		// check if there is additional image data
 		if( is_array( $objImage->images ) )
@@ -322,7 +322,7 @@ class ContentFacebookGallery extends \ContentElement
 
 				foreach( $imgs as $img )
 				{
-					if( $img->width > $size[0] && $img->height > $size[1] )
+					if( $img->width > &$minWidth && $img->height > $minHeight )
 					{
 						$thumbSrc = $img->source;
 						$thumbWidth = $img->width;
