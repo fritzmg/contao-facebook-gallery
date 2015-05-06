@@ -237,7 +237,7 @@ class ContentFacebookGallery extends \ContentElement
 		// prepare images array
 		$images = array();
 
-		// build graph URL (fetch as much images as possible)
+		// build graph URL (fetch as many images as possible)
 		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000';
 
 		do
