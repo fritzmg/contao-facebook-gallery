@@ -1,6 +1,6 @@
 {
 	"name":"fritzmg/contao-facebook-gallery",
-	"description":"Simple Contao extension to provide share buttons as a module and content element",
+	"description":"Contao extension to integrate a public Facebook album just like a regular Contao gallery.",
 	"keywords":["contao", "facebook", "album"],
 	"type":"contao-module",
 	"homepage":"http://www.inspiredminds.at",
@@ -21,7 +21,7 @@
 	},
 	"require":{
 		"php":">=5.2",
-		"contao/core":">=3.0,<3.5",
+		"contao/core":">=3.0,<3.6",
 		"contao-community-alliance/composer-installer":"*"
 	},
     "replace": {
