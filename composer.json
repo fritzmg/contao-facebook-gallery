@@ -22,7 +22,8 @@
 	"require":{
 		"php":">=5.2",
 		"contao/core":">=3.0,<3.6",
-		"contao-community-alliance/composer-installer":"*"
+		"contao-community-alliance/composer-installer":"*",
+		"fritzmg/contao-facebook-js-sdk": ">=0.1.1"
 	},
     "replace": {
         "contao-legacy/facebook_gallery": "self.version"

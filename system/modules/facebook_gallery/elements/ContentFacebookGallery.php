@@ -228,6 +228,10 @@ class ContentFacebookGallery extends \ContentElement
 	 */
 	private function getImages()
 	{
+		// check for valid config
+		if( !$GLOBALS['TL_CONFIG']['fb_app_id'] || !$GLOBALS['TL_CONFIG']['fb_app_secret'] )
+			return array();
+
 		// return the cached result if available
 		$objFile = new \File( $this->strCacheFile );
 		$images = json_decode( $objFile->getContent() );
@@ -237,8 +241,12 @@ class ContentFacebookGallery extends \ContentElement
 		// prepare images array
 		$images = array();
 
+		// get access token
+		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.$GLOBALS['TL_CONFIG']['fb_app_id'].'&client_secret='.$GLOBALS['TL_CONFIG']['fb_app_secret'].'&grant_type=client_credentials';
+		$accessToken = file_get_contents( $tokenUrl );
+
 		// build graph URL (fetch as many images as possible)
-		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000';
+		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000&'.$accessToken;
 
 		do
 		{
