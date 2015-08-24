@@ -246,7 +246,7 @@ class ContentFacebookGallery extends \ContentElement
 		$accessToken = file_get_contents( $tokenUrl );
 
 		// build graph URL (fetch as many images as possible)
-		$graphUrl = 'http://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000&'.$accessToken;
+		$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000&'.$accessToken;
 
 		do
 		{
