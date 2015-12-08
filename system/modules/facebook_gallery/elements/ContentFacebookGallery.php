@@ -353,6 +353,7 @@ class ContentFacebookGallery extends \ContentElement
 		(
 			'href'   => $fullSrc,
 			'src'    => $useThumb ? $thumbSrc : $fullSrc,
+			'srcset' => $useThumb ? $thumbSrc : $fullSrc,
 			'width'  => $useThumb ? $thumbWidth : $fullWidth,
 			'height' => $useThumb ? $thumbHeight : $fullHeight
 		);
