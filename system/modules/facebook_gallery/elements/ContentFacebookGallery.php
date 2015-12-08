@@ -353,7 +353,7 @@ class ContentFacebookGallery extends \ContentElement
 				foreach( $imgs as $img )
 				{
 					$x = round( $img->width / $thumbWidth, 2 );
-					if( $x < 4 )
+					if( $x >= 0.25 && $x < 4 )
 						$srcSet[] = $img->source.' '.$x.'x';
 				}
 				$srcSet = implode(', ',$srcSet);
