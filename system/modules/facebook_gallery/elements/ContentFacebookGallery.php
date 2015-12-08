@@ -335,8 +335,8 @@ class ContentFacebookGallery extends \ContentElement
 
 			if( $useThumb )
 			{
+				// search for the first image with the minimum width
 				ksort( $imgs );
-
 				foreach( $imgs as $img )
 				{
 					if( $img->width >= $minWidth && $img->height >= $minHeight )
