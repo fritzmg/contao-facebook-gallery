@@ -297,6 +297,7 @@ class ContentFacebookGallery extends \ContentElement
 		$thumbSrc = $fullSrc;
 		$thumbWidth = $fullWidth;
 		$thumbHeight = $fullHeight;
+		$srcSet = $fullSrc;
 
 		// determine the minimum thumb width and height
 		$size = deserialize( $this->size );
@@ -346,16 +347,26 @@ class ContentFacebookGallery extends \ContentElement
 						break;
 					}
 				}
+
+				// build srcset
+				$srcSet = array();
+				foreach( $imgs as $img )
+				{
+					$x = round( $img->width / $thumbWidth, 2 );
+					if( $x < 4 )
+						$srcSet[] = $img->source.' '.$x.'x';
+				}
+				$srcSet = implode(', ',$srcSet);
 			}
 		}
 
 		return array
 		(
 			'href'   => $fullSrc,
-			'src'    => $useThumb ? $thumbSrc : $fullSrc,
-			'srcset' => $useThumb ? $thumbSrc : $fullSrc,
-			'width'  => $useThumb ? $thumbWidth : $fullWidth,
-			'height' => $useThumb ? $thumbHeight : $fullHeight
+			'src'    => $thumbSrc,
+			'srcset' => $srcSet,
+			'width'  => $thumbWidth,
+			'height' => $thumbHeight
 		);
 	}
 }
