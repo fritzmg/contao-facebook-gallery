@@ -188,11 +188,18 @@ class ContentFacebookGallery extends \ContentElement
 
 					// process image and set parameters for gallery
 					$img = $this->processImage( $images[($i+$j)], $intMaxWidth );
-					$objCell->src = $img['src'];
-					$objCell->href = $img['href'];
-					$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
-					$objCell->margin = static::generateMargin( deserialize( $this->imagemargin ) );
 					$objCell->addImage = '1';
+					$objCell->margin = static::generateMargin( deserialize( $this->imagemargin ) );
+					if( version_compare( VERSION, '3.4', '<' ) )
+					{
+						$objCell->src = $img['src'];
+						$objCell->href = $img['href'];
+						$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
+					}
+					else
+					{
+						$objCell->picture = array('img' => $img);
+					}
 
 					if( $this->fullsize )
 						$objCell->attributes = ($objPage->outputFormat == 'xhtml') ? ' rel="' . $strLightboxId . '"' : ' data-lightbox="' . substr($strLightboxId, 9, -1) . '"';
@@ -299,7 +306,8 @@ class ContentFacebookGallery extends \ContentElement
 		$minHeight = $size[1];
 
 		// check for maximum width
-		$minWidth = $minWidth > 0 ? min( $minWidth, $maxWidth ) : $maxWidth;
+		if( $maxWidth > 0 )
+			$minWidth = $minWidth > 0 ? min( $minWidth, $maxWidth ) : $maxWidth;
 
 		// whether to use thumbnails
 		$useThumb =  $minWidth > 0 || $minHeight > 0;
