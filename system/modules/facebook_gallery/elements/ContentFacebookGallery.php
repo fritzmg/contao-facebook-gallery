@@ -186,16 +186,12 @@ class ContentFacebookGallery extends \ContentElement
 					$img = $this->processImage( $images[($i+$j)], $intMaxWidth );
 					$objCell->addImage = '1';
 					$objCell->margin = static::generateMargin( deserialize( $this->imagemargin ) );
-					if( version_compare( VERSION, '3.4', '<' ) )
-					{
-						$objCell->src = $img['src'];
-						$objCell->href = $img['href'];
-						$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
-					}
-					else
-					{
+					$objCell->href = $img['href'];
+					$objCell->src = $img['src'];
+					$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
+					
+					if( version_compare( VERSION, '3.4', '>=' ) )
 						$objCell->picture = array('img' => $img);
-					}
 
 					if( $this->fullsize )
 						$objCell->attributes = ($objPage->outputFormat == 'xhtml') ? ' rel="' . $strLightboxId . '"' : ' data-lightbox="' . substr($strLightboxId, 9, -1) . '"';
