@@ -59,8 +59,11 @@ class ContentFacebookGallery extends \ContentElement
 		// otherwise extract from url
 		elseif( preg_match('/https{0,1}:\/\/.*facebook.com\/.*a\.([0-9]*)\..*/i', $this->fbAlbumId, $matches) )
 		{
-			if( count( $matches ) > 1 )
-				$this->strAlbumId = $matches[1];
+			$this->strAlbumId = $matches[1];
+		}
+		elseif( preg_match('/album_id=([0-9]+)/i', $this->fbAlbumId, $matches) )
+		{
+			$this->strAlbumId = $matches[1];
 		}
 
 		// set type to gallery

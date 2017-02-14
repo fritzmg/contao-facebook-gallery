@@ -19,6 +19,6 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['fbAlbumId'] = array
 	'label'     => &$GLOBALS['TL_LANG']['tl_content']['fbAlbumId'],
 	'exclude'   => true,
 	'inputType' => 'text',
-	'eval'      => array('tl_class' => 'long','maxlength'=>255),
+	'eval'      => array('tl_class' => 'long','maxlength'=>255,'decodeEntities'=>true),
 	'sql'       => "varchar(255) NOT NULL default ''"
 );
