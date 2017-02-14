@@ -75,7 +75,7 @@ class ContentFacebookGallery extends \ContentElement
 		$this->cssID = array( $this->cssID[0], implode( ' ', $arrClasses ) );
 
 		// set the path to the cache file
-		$this->strCacheFile = 'system/cache/facebook/' . $this->strAlbumId . '.json';
+		$this->strCacheFile = 'system/cache/facebook/album_' . $this->strAlbumId . '.json';
 
 		return parent::generate();
 	}
