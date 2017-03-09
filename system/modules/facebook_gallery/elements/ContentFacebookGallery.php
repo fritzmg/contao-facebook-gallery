@@ -39,6 +39,13 @@ class ContentFacebookGallery extends \ContentElement
 
 
 	/**
+	 * The Facebook data including album name and images.
+	 * @var stdClass
+	 */
+	protected $objAlbumData = null;
+
+
+	/**
 	 * Image cache file path
 	 * @var string
 	 */
@@ -77,6 +84,19 @@ class ContentFacebookGallery extends \ContentElement
 		// set the path to the cache file
 		$this->strCacheFile = 'system/cache/facebook/album_' . $this->strAlbumId . '.json';
 
+		// add headline from Facebook
+		if( !$this->headline && $this->fbAlbumTitle )
+		{
+			// get the album data
+			$objAlbumData = $this->getAlbumData();
+
+			// check if name is present
+			if( isset( $objAlbumData->name ) )
+			{
+				$this->headline = $objAlbumData->name;
+			}
+		}
+
 		return parent::generate();
 	}
 
@@ -92,12 +112,17 @@ class ContentFacebookGallery extends \ContentElement
 		if( !$this->strAlbumId )
 			return;
 
-		// prepare images array
-		$images = $this->getImages();
+		// get the album data
+		$objAlbumData = $this->getAlbumData();
+
+		// get the images
+		$images = $objAlbumData->images;
 
 		// if there are no images, do nothing
 		if( count( $images ) == 0 )
+		{
 			return;
+		}
 
 		// Limit the total number of items (see #2652)
 		if ($this->numberOfItems > 0)
@@ -185,13 +210,25 @@ class ContentFacebookGallery extends \ContentElement
 					$objCell->colWidth = $colwidth . '%';
 					$objCell->class = 'col_'.$j . $class_td;
 
+					// get the image object
+					$objImage = $images[($i+$j)];
+
 					// process image and set parameters for gallery
-					$img = $this->processImage( $images[($i+$j)], $intMaxWidth );
+					$img = $this->processImage( $objImage, $intMaxWidth );
 					$objCell->addImage = '1';
 					$objCell->margin = static::generateMargin( deserialize( $this->imagemargin ) );
 					$objCell->href = $img['href'];
 					$objCell->src = $img['src'];
 					$objCell->imgSize = ' width="'.$img['width'].'" height="'.$img['height'].'"';
+
+					// add caption
+					if( $this->fbAlbumCaption )
+					{
+						$objCell->caption = $objImage->name;
+					}
+
+					// add Facebook data to cell
+					$objCell->fbData = $objImage;
 					
 					if( version_compare( VERSION, '3.4', '>=' ) )
 						$objCell->picture = array('img' => $img);
@@ -226,53 +263,100 @@ class ContentFacebookGallery extends \ContentElement
 
 
 	/**
-	 * Returns images from either the cache or directly from the public facebook graph
-	 * @return array
+	 * Returns an App access token parameter ("access_token=…").
+	 *
+	 * @return string
 	 */
-	private function getImages()
+	protected function getAccessToken()
 	{
-		// check for valid config
 		if( !$GLOBALS['TL_CONFIG']['fb_app_id'] || !$GLOBALS['TL_CONFIG']['fb_app_secret'] )
-			return array();
-
-		// return the cached result if available
-		$objFile = new \File( $this->strCacheFile );
-		$images = json_decode( $objFile->getContent() );
-		if( is_array( $images ) )
-			return $images;
-
-		// prepare images array
-		$images = array();
-
-		// get access token
-		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.$GLOBALS['TL_CONFIG']['fb_app_id'].'&client_secret='.$GLOBALS['TL_CONFIG']['fb_app_secret'].'&grant_type=client_credentials';
-		$accessToken = file_get_contents( $tokenUrl );
-
-		// build graph URL (fetch as many images as possible)
-		$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,images,width,height,source&limit=1000&'.$accessToken;
-
-		do
 		{
-			// get result
-			$result = json_decode( file_get_contents( $graphUrl ) );
-
-			// check for result
-			if( !$result )
-				break;
-
-			// merge images
-			$images = array_merge( $images, $result->data );
-
-			// get the next page
-			$graphUrl = $result->paging->next;
+			throw new \Exception( 'Cannot generate access token - App ID or App Secret missing.' );
 		}
-		while( $result->paging->next );
 
-		// cache into file
-		$objFile->write( json_encode( $images ) );
+		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.$GLOBALS['TL_CONFIG']['fb_app_id'].'&client_secret='.$GLOBALS['TL_CONFIG']['fb_app_secret'].'&grant_type=client_credentials';
+		return file_get_contents( $tokenUrl );
+	}
 
-		// return images
-		return $images;
+
+	/**
+	 * Returns the album data.
+	 *
+	 * @return stdClass
+	 */
+	protected function getAlbumData()
+	{
+		// check if album data is already present
+		if( $this->objAlbumData !== null )
+		{
+			return $this->objAlbumData;
+		}
+
+		try
+		{
+			// get the cached result if available
+			$objFile = new \File( $this->strCacheFile );
+
+			// decode the album data
+			$objAlbumData = json_decode( $objFile->getContent() );
+
+			// check if album data is present
+			if( is_object( $objAlbumData ) )
+			{
+				if( isset( $objAlbumData->images ) )
+				{
+					$this->objAlbumData = $objAlbumData;
+					return $this->objAlbumData;
+				}
+			}
+
+			// initialize album data
+			$objAlbumData = new \stdClass();
+
+			// retrieve album title
+			$objData = json_decode( file_get_contents( 'https://graph.facebook.com/' . $this->strAlbumId . '?fields=id,name&'.$this->getAccessToken() ) );
+			$objAlbumData->name = $objData->name;
+
+			// prepare images array
+			$images = array();
+
+			// build graph URL (fetch as many images as possible)
+			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source&limit=1000&'.$this->getAccessToken();
+
+			do
+			{
+				// get result
+				$result = json_decode( file_get_contents( $graphUrl ) );
+
+				// check for result
+				if( !$result )
+					break;
+
+				// merge images
+				$images = array_merge( $images, $result->data );
+
+				// get the next page
+				$graphUrl = $result->paging->next;
+			}
+			while( $result->paging->next );
+
+			// set the image data
+			$objAlbumData->images = $images;
+
+			// cache into file
+			$objFile->write( json_encode( $objAlbumData ) );
+
+			// save in object
+			$this->objAlbumData = $objAlbumData;
+
+			// return the album data
+			return $this->objAlbumData;
+		}
+		catch( \Exception $e )
+		{
+			\System::log('Error while retrieving data for Facebook album '.$this->strAlbumId.': '.$e->getMessage(), __METHOD__, TL_ERROR);
+			return new \stdClass();
+		}
 	}
 
 
@@ -281,7 +365,7 @@ class ContentFacebookGallery extends \ContentElement
 	 * @param object
 	 * @return array
 	 */
-	private function processImage( $objImage, $maxWidth = 0 )
+	protected function processImage( $objImage, $maxWidth = 0 )
 	{
 		// get the image source and megapixel
 		$fullSrc = $objImage->source;
