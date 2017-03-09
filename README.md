@@ -13,6 +13,10 @@ You can also define an image width and/or height (the image size mode will be ig
 
 Additionally, a srcset from the available resolutions for each image will be created.
 
+### Template data
+
+For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name.
+
 ### Notes
 
 * Due to a lack of implementation within the Graph API of Facebook, public albums from Facebook groups cannot be displayed.
