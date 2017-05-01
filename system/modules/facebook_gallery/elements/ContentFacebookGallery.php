@@ -51,6 +51,12 @@ class ContentFacebookGallery extends \ContentElement
 	 */
 	protected $strCacheFile = '';
 
+	/**
+	 * Facebook access token
+	 * @var string
+	 */
+	protected $strAccessToken = '';
+
 
 	/**
 	 * Return if there are no files
@@ -269,13 +275,27 @@ class ContentFacebookGallery extends \ContentElement
 	 */
 	protected function getAccessToken()
 	{
+		if( $this->strAccessToken )
+		{
+			return $this->strAccessToken;
+		}
+
 		if( !$GLOBALS['TL_CONFIG']['fb_app_id'] || !$GLOBALS['TL_CONFIG']['fb_app_secret'] )
 		{
 			throw new \Exception( 'Cannot generate access token - App ID or App Secret missing.' );
 		}
 
 		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.$GLOBALS['TL_CONFIG']['fb_app_id'].'&client_secret='.$GLOBALS['TL_CONFIG']['fb_app_secret'].'&grant_type=client_credentials';
-		return file_get_contents( $tokenUrl );
+		$tokenData = json_decode( @file_get_contents( $tokenUrl ) );
+
+		if( !$tokenData )
+		{
+			throw new \Exception('Error while fetching access token.');
+		}
+
+		$this->strAccessToken = $tokenData->access_token;
+
+		return $this->strAccessToken;
 	}
 
 
@@ -314,23 +334,31 @@ class ContentFacebookGallery extends \ContentElement
 			$objAlbumData = new \stdClass();
 
 			// retrieve album title
-			$objData = json_decode( file_get_contents( 'https://graph.facebook.com/' . $this->strAlbumId . '?fields=id,name&'.$this->getAccessToken() ) );
+			$objData = json_decode( @file_get_contents( 'https://graph.facebook.com/' . $this->strAlbumId . '?fields=id,name&access_token='.$this->getAccessToken() ) );
+
+			if( !$objData )
+			{
+				throw new \Exception('Could not retrieve album data.');
+			}
+
 			$objAlbumData->name = $objData->name;
 
 			// prepare images array
 			$images = array();
 
 			// build graph URL (fetch as many images as possible)
-			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source&limit=1000&'.$this->getAccessToken();
+			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source&limit=1000&access_token='.$this->getAccessToken();
 
 			do
 			{
 				// get result
-				$result = json_decode( file_get_contents( $graphUrl ) );
+				$result = json_decode( @file_get_contents( $graphUrl ) );
 
 				// check for result
 				if( !$result )
+				{
 					break;
+				}
 
 				// merge images
 				$images = array_merge( $images, $result->data );
