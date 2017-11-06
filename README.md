@@ -1,9 +1,13 @@
+[![](https://img.shields.io/maintenance/yes/2017.svg)](https://github.com/fritzmg/contao-facebook-gallery)
+[![](https://img.shields.io/packagist/v/fritzmg/contao-facebook-gallery.svg)](https://packagist.org/packages/fritzmg/contao-facebook-gallery)
+[![](https://img.shields.io/packagist/dt/fritzmg/contao-facebook-gallery.svg)](https://packagist.org/packages/fritzmg/contao-facebook-gallery)
+
 Contao Facebook Gallery
 ===================
 
 Simple extension to allow the integration of a Facebook album via a gallery content element. 
 
-### Usage
+## Usage
 
 In order to be able to use the content element, you need to create a [Facebook App](https://developers.facebook.com) first. Then you can define the Facebook App ID and App Secret in the System Settings of Contao.
 
@@ -13,16 +17,16 @@ You can also define an image width and/or height (the image size mode will be ig
 
 Additionally, a srcset from the available resolutions for each image will be created.
 
-### Template data
+## Template data
 
 For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name.
 
-### Notes
+## Notes
 
 * Due to a lack of implementation within the Graph API of Facebook, public albums from Facebook groups cannot be displayed.
 * Currently, the images are always linked directly from Facebook and will not be cached locally.
 * The Facebook Graph API data is cached locally and can be purged in the system maintenance.
 
-### Acknowledgements
+## Acknowledgements
 
 Development funded by [Kosmopiloten](http://www.kosmopiloten.at).
