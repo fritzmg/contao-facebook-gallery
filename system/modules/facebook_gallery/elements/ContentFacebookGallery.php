@@ -30,20 +30,17 @@ class ContentFacebookGallery extends \ContentElement
 	 */
 	protected $strAlbumId = '';
 
-
 	/**
 	 * Template
 	 * @var string
 	 */
 	protected $strTemplate = 'ce_gallery';
 
-
 	/**
 	 * The Facebook data including album name and images.
 	 * @var stdClass
 	 */
 	protected $objAlbumData = null;
-
 
 	/**
 	 * Image cache file path
@@ -56,6 +53,12 @@ class ContentFacebookGallery extends \ContentElement
 	 * @var string
 	 */
 	protected $strAccessToken = '';
+
+	/**
+	 * Cache file directory
+	 * @var string
+	 */
+	const CACHE_DIR = 'system/cache/facebook';
 
 
 	/**
@@ -70,7 +73,7 @@ class ContentFacebookGallery extends \ContentElement
 			$this->strAlbumId = $this->fbAlbumId;
 		}
 		// otherwise extract from url
-		elseif( preg_match('/https{0,1}:\/\/.*facebook.com\/.*a\.([0-9]*)\..*/i', $this->fbAlbumId, $matches) )
+		elseif( preg_match('/https{0,1}:\/\/.*facebook.com\/.*a\.([0-9]*)($|[^0-9])/i', $this->fbAlbumId, $matches) )
 		{
 			$this->strAlbumId = $matches[1];
 		}
@@ -88,7 +91,7 @@ class ContentFacebookGallery extends \ContentElement
 		$this->cssID = array( $this->cssID[0], implode( ' ', $arrClasses ) );
 
 		// set the path to the cache file
-		$this->strCacheFile = 'system/cache/facebook/album_' . $this->strAlbumId . '.json';
+		$this->strCacheFile = self::CACHE_DIR . '/album_' . $this->strAlbumId . '.json';
 
 		// add headline from Facebook
 		if( !$this->headline && $this->fbAlbumTitle )
@@ -280,12 +283,12 @@ class ContentFacebookGallery extends \ContentElement
 			return $this->strAccessToken;
 		}
 
-		if( !$GLOBALS['TL_CONFIG']['fb_app_id'] || !$GLOBALS['TL_CONFIG']['fb_app_secret'] )
+		if (!\FacebookJSSDK::hasValidConfig())
 		{
 			throw new \Exception( 'Cannot generate access token - App ID or App Secret missing.' );
 		}
 
-		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.$GLOBALS['TL_CONFIG']['fb_app_id'].'&client_secret='.$GLOBALS['TL_CONFIG']['fb_app_secret'].'&grant_type=client_credentials';
+		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.\FacebookJSSDK::getAppId().'&client_secret='.\FacebookJSSDK::getAppSecret().'&grant_type=client_credentials';
 		$tokenData = json_decode( @file_get_contents( $tokenUrl ) );
 
 		if( !$tokenData )
@@ -318,7 +321,7 @@ class ContentFacebookGallery extends \ContentElement
 			$objFile = new \File( $this->strCacheFile );
 
 			// decode the album data
-			$objAlbumData = json_decode( $objFile->getContent() );
+			$objAlbumData = file_exists(TL_ROOT . '/' . $this->strCacheFile) ? json_decode($objFile->getContent()) : null;
 
 			// check if album data is present
 			if( is_object( $objAlbumData ) )
@@ -347,7 +350,7 @@ class ContentFacebookGallery extends \ContentElement
 			$images = array();
 
 			// build graph URL (fetch as many images as possible)
-			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source&limit=1000&access_token='.$this->getAccessToken();
+			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source,created_time&limit=1000&access_token='.$this->getAccessToken();
 
 			do
 			{
@@ -370,6 +373,12 @@ class ContentFacebookGallery extends \ContentElement
 
 			// set the image data
 			$objAlbumData->images = $images;
+
+			// check for cache dir
+			if (!file_exists(TL_ROOT . '/' . self::CACHE_DIR))
+			{
+				mkdir(TL_ROOT . '/' . self::CACHE_DIR, 0777, true);
+			}
 
 			// cache into file
 			$objFile->write( json_encode( $objAlbumData ) );
