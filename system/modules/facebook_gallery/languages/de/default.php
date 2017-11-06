@@ -9,7 +9,7 @@
  * @package   facebook_gallery
  * @link      http://www.inspiredminds.at
  * @author    Fritz Michael Gschwantner <fmg@inspiredminds.at>
- * @license   GPL-2.0
+ * @license   LGPL-3.0+
  */
 
 
