@@ -82,6 +82,13 @@ class ContentFacebookGallery extends \ContentElement
 			$this->strAlbumId = $matches[1];
 		}
 
+		// check if album ID is present
+		if (!$this->strAlbumId)
+		{
+			\System::log('Could not extract Facebook album ID from ' . $this->fbAlbumId, __METHOD__, TL_ERROR);
+			return '';
+		}
+
 		// set type to gallery
 		$this->type = 'gallery';
 

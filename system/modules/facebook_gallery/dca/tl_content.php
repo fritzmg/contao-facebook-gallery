@@ -29,7 +29,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['fbAlbumTitle'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['fbAlbumTitle'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
-	'eval'                    => array('submitOnChange'=>true,'tl_class'=>'w50'),
+	'eval'                    => array('tl_class'=>'w50'),
 	'sql'                     => "char(1) NOT NULL default ''"
 );
 
@@ -38,7 +38,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['fbAlbumCaption'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['fbAlbumCaption'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
-	'eval'                    => array('submitOnChange'=>true,'tl_class'=>'w50'),
+	'eval'                    => array('tl_class'=>'w50'),
 	'sql'                     => "char(1) NOT NULL default ''"
 );
 
