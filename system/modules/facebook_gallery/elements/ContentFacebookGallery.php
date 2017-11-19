@@ -128,9 +128,40 @@ class ContentFacebookGallery extends \ContentElement
 		$images = $objAlbumData->images;
 
 		// if there are no images, do nothing
-		if( count( $images ) == 0 )
+		if(count($images) == 0)
 		{
 			return;
+		}
+
+		// TODO: sort the images
+		$blnDesc = stripos($this->fbAlbumSort, '_desc') !== false;
+		switch ($this->fbAlbumSort)
+		{
+			case 'fbAlbumSort_id_asc':
+			case 'fbAlbumSort_id_desc':
+				usort($images, function($a, $b) use ($blnDesc)
+				{
+					if ($blnDesc)
+					{
+						return (int)$b->id - (int)$a->id;
+					}
+
+					return (int)$a->id - (int)$b->id;
+				});
+				break;
+
+			case 'fbAlbumSort_time_asc':
+			case 'fbAlbumSort_time_desc':
+				usort($images, function($a, $b) use ($blnDesc)
+				{
+					if ($blnDesc)
+					{
+						return strtotime($b->created_time) - strtotime($a->created_time);
+					}
+
+					return strtotime($a->created_time) - strtotime($b->created_time);
+				});
+				break;
 		}
 
 		// Limit the total number of items (see #2652)
@@ -317,16 +348,23 @@ class ContentFacebookGallery extends \ContentElement
 
 		try
 		{
-			// get the cached result if available
-			$objFile = new \File( $this->strCacheFile );
+			// create the cache file
+			if (version_compare(VERSION, '4.0', '>=') && !file_exists(TL_ROOT . '/' . $this->strCacheFile))
+			{
+				$fs = new \Symfony\Component\Filesystem\Filesystem();
+				$fs->mkdir(TL_ROOT . '/' . self::CACHE_DIR);
+				$fs->touch(TL_ROOT . '/' . $this->strCacheFile);
+			}
 
-			// decode the album data
-			$objAlbumData = file_exists(TL_ROOT . '/' . $this->strCacheFile) ? json_decode($objFile->getContent()) : null;
+			// get the cached result if available
+			$objFile = new \File($this->strCacheFile);
+			$objAlbumData = json_decode($objFile->getContent());
 
 			// check if album data is present
-			if( is_object( $objAlbumData ) )
+			if(is_object($objAlbumData) && isset($objAlbumData->images))
 			{
-				if( isset( $objAlbumData->images ) )
+				// check cache override
+				if ('' === $this->fbAlbumTimeout || null === $this->fbAlbumTimeout || time() - $objFile->mtime < $this->fbAlbumTimeout)
 				{
 					$this->objAlbumData = $objAlbumData;
 					return $this->objAlbumData;
@@ -374,14 +412,9 @@ class ContentFacebookGallery extends \ContentElement
 			// set the image data
 			$objAlbumData->images = $images;
 
-			// check for cache dir
-			if (!file_exists(TL_ROOT . '/' . self::CACHE_DIR))
-			{
-				mkdir(TL_ROOT . '/' . self::CACHE_DIR, 0777, true);
-			}
-
 			// cache into file
-			$objFile->write( json_encode( $objAlbumData ) );
+			$objFile->write(json_encode($objAlbumData));
+			$objFile->close();
 
 			// save in object
 			$this->objAlbumData = $objAlbumData;

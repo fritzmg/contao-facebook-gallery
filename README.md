@@ -17,6 +17,8 @@ You can also define an image width and/or height (the image size mode will be ig
 
 Additionally, a srcset from the available resolutions for each image will be created.
 
+Since version `1.4.0` there is a sorting setting. Keep in mind that sorting by `ID` will only work on systems that use a 64-bit PHP environment, due to the large Facebook IDs.
+
 ## Template data
 
 For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name.
