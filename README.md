@@ -1,4 +1,4 @@
-[![](https://img.shields.io/maintenance/yes/2017.svg)](https://github.com/fritzmg/contao-facebook-gallery)
+[![](https://img.shields.io/maintenance/yes/2019.svg)](https://github.com/fritzmg/contao-facebook-gallery)
 [![](https://img.shields.io/packagist/v/fritzmg/contao-facebook-gallery.svg)](https://packagist.org/packages/fritzmg/contao-facebook-gallery)
 [![](https://img.shields.io/packagist/dt/fritzmg/contao-facebook-gallery.svg)](https://packagist.org/packages/fritzmg/contao-facebook-gallery)
 
@@ -9,7 +9,7 @@ Simple extension to allow the integration of a Facebook album via a gallery cont
 
 ## Usage
 
-In order to be able to use the content element, you need to create a [Facebook App](https://developers.facebook.com) first. Then you can define the Facebook App ID and App Secret in the System Settings of Contao.
+In order to be able to use the content element, you need to create a [Facebook App](https://developers.facebook.com) first. Then you can define the Facebook App ID and App Secret in the System Settings of Contao. Since 2018 you also need to submit the _[Page Public Content Access](https://developers.facebook.com/docs/apps/review/feature/#reference-PAGES_ACCESS)_ app permission for review, at least for public page albums.
 
 Within the content element, you can simply provide the URL to the Facebook album, or its Facebook ID. 
 

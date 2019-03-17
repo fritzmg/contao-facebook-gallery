@@ -49,10 +49,10 @@ class ContentFacebookGallery extends \ContentElement
 	protected $strCacheFile = '';
 
 	/**
-	 * Facebook access token
-	 * @var string
+	 * Facebook API
+	 * @var \Facebook\Facebook
 	 */
-	protected $strAccessToken = '';
+	protected static $fb;
 
 	/**
 	 * Cache file directory
@@ -310,34 +310,34 @@ class ContentFacebookGallery extends \ContentElement
 
 
 	/**
-	 * Returns an App access token parameter ("access_token=…").
+	 * Returns a Facebook object.
 	 *
-	 * @return string
+	 * @return Facebook
 	 */
-	protected function getAccessToken()
+	protected function getFacebookApi()
 	{
-		if( $this->strAccessToken )
+		if (self::$fb)
 		{
-			return $this->strAccessToken;
+			return self::$fb;
 		}
 
 		if (!\FacebookJSSDK::hasValidConfig())
 		{
-			throw new \Exception( 'Cannot generate access token - App ID or App Secret missing.' );
+			throw new \Exception('Cannot access Facebook API. App ID or App Secret missing.');
 		}
 
-		$tokenUrl = 'https://graph.facebook.com/oauth/access_token?client_id='.\FacebookJSSDK::getAppId().'&client_secret='.\FacebookJSSDK::getAppSecret().'&grant_type=client_credentials';
-		$tokenData = json_decode( @file_get_contents( $tokenUrl ) );
+		$facebookApp = new \Facebook\FacebookApp(\FacebookJSSDK::getAppId(), \FacebookJSSDK::getAppSecret());
 
-		if( !$tokenData )
-		{
-			throw new \Exception('Error while fetching access token.');
-		}
+		self::$fb = new \Facebook\Facebook([
+			'app_id' => \FacebookJSSDK::getAppId(),
+			'app_secret' => \FacebookJSSDK::getAppSecret(),
+			'default_graph_version' => \FacebookJSSDK::getAppVersion(),
+			'default_access_token' => $facebookApp->getAccessToken(),
+		]);
 
-		$this->strAccessToken = $tokenData->access_token;
-
-		return $this->strAccessToken;
+		return self::$fb;
 	}
+
 
 
 	/**
@@ -348,92 +348,88 @@ class ContentFacebookGallery extends \ContentElement
 	protected function getAlbumData()
 	{
 		// check if album data is already present
-		if( $this->objAlbumData !== null )
+		if ($this->objAlbumData !== null)
 		{
 			return $this->objAlbumData;
 		}
 
+		// create the cache file
+		if (version_compare(VERSION, '4.0', '>=') && !file_exists(TL_ROOT . '/' . $this->strCacheFile))
+		{
+			$fs = new \Symfony\Component\Filesystem\Filesystem();
+			$fs->mkdir(TL_ROOT . '/' . self::CACHE_DIR);
+			$fs->touch(TL_ROOT . '/' . $this->strCacheFile);
+		}
+
+		// get the cached result if available
+		$objFile = new \File($this->strCacheFile);
+		$objAlbumData = json_decode($objFile->getContent());
+
+		// check if album data is present
+		if (is_object($objAlbumData) && isset($objAlbumData->images))
+		{
+			// check cache override
+			if ('' === $this->fbAlbumTimeout || null === $this->fbAlbumTimeout || time() - $objFile->mtime < $this->fbAlbumTimeout)
+			{
+				$this->objAlbumData = $objAlbumData;
+				return $this->objAlbumData;
+			}
+		}
+
+		// initialize album data
+		$objAlbumData = new \stdClass();
+
 		try
 		{
-			// create the cache file
-			if (version_compare(VERSION, '4.0', '>=') && !file_exists(TL_ROOT . '/' . $this->strCacheFile))
-			{
-				$fs = new \Symfony\Component\Filesystem\Filesystem();
-				$fs->mkdir(TL_ROOT . '/' . self::CACHE_DIR);
-				$fs->touch(TL_ROOT . '/' . $this->strCacheFile);
-			}
 
-			// get the cached result if available
-			$objFile = new \File($this->strCacheFile);
-			$objAlbumData = json_decode($objFile->getContent());
-
-			// check if album data is present
-			if(is_object($objAlbumData) && isset($objAlbumData->images))
-			{
-				// check cache override
-				if ('' === $this->fbAlbumTimeout || null === $this->fbAlbumTimeout || time() - $objFile->mtime < $this->fbAlbumTimeout)
-				{
-					$this->objAlbumData = $objAlbumData;
-					return $this->objAlbumData;
-				}
-			}
-
-			// initialize album data
-			$objAlbumData = new \stdClass();
+			// init Facebook API
+			$fb = $this->getFacebookApi();
 
 			// retrieve album title
-			$objData = json_decode( @file_get_contents( 'https://graph.facebook.com/' . $this->strAlbumId . '?fields=id,name&access_token='.$this->getAccessToken() ) );
-
-			if( !$objData )
-			{
-				throw new \Exception('Could not retrieve album data.');
-			}
-
-			$objAlbumData->name = $objData->name;
+			$objAlbumData->name = $fb->get($this->strAlbumId . '?fields=id,name')->getDecodedBody()['name'];
 
 			// prepare images array
 			$images = array();
 
-			// build graph URL (fetch as many images as possible)
-			$graphUrl = 'https://graph.facebook.com/' . $this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source,created_time&limit=1000&access_token='.$this->getAccessToken();
+			// request images
+			$result = $fb->get($this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source,created_time&limit=1000');
+
+			// get initial feed edge
+			$feedEdge = $result->getGraphEdge();
 
 			do
 			{
-				// get result
-				$result = json_decode( @file_get_contents( $graphUrl ) );
+				// get the feed edge items
+				$items = $feedEdge->asArray();
 
-				// check for result
-				if( !$result )
+				// check for items
+				if (!$items)
 				{
 					break;
 				}
 
-				// merge images
-				$images = array_merge( $images, $result->data );
-
-				// get the next page
-				$graphUrl = $result->paging->next;
+				// merge items
+				$images = array_merge($images, $items);
 			}
-			while( $result->paging->next );
+			while ($feedEdge = $fb->next($feedEdge));
 
 			// set the image data
-			$objAlbumData->images = $images;
+			$objAlbumData->images = json_decode(json_encode($images));
 
 			// cache into file
 			$objFile->write(json_encode($objAlbumData));
 			$objFile->close();
-
-			// save in object
-			$this->objAlbumData = $objAlbumData;
-
-			// return the album data
-			return $this->objAlbumData;
 		}
-		catch( \Exception $e )
+		catch (\Exception $e)
 		{
 			\System::log('Error while retrieving data for Facebook album '.$this->strAlbumId.': '.$e->getMessage(), __METHOD__, TL_ERROR);
-			return new \stdClass();
 		}
+
+		// save in object
+		$this->objAlbumData = $objAlbumData;
+
+		// return the album data
+		return $this->objAlbumData;
 	}
 
 
