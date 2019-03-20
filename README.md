@@ -37,7 +37,7 @@ Since version `1.4.0` there is a sorting setting. Keep in mind that sorting by `
 
 ## Template data
 
-For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name.
+For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name. Since version `1.5.0` this also contains the Facebook link of the image.
 
 ## Notes
 

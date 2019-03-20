@@ -392,7 +392,7 @@ class ContentFacebookGallery extends \ContentElement
 			$images = array();
 
 			// request images
-			$result = $fb->get($this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source,created_time&limit=1000');
+			$result = $fb->get($this->strAlbumId . '/photos?fields=id,name,album,images,width,height,source,created_time,link&limit=1000');
 
 			// get initial feed edge
 			$feedEdge = $result->getGraphEdge();
