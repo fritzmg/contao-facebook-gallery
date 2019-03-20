@@ -163,10 +163,10 @@ class ContentFacebookGallery extends \ContentElement
 				{
 					if ($blnDesc)
 					{
-						return strtotime($b->created_time) - strtotime($a->created_time);
+						return strtotime($b->created_time->date) - strtotime($a->created_time->date);
 					}
 
-					return strtotime($a->created_time) - strtotime($b->created_time);
+					return strtotime($a->created_time->date) - strtotime($b->created_time->date);
 				});
 				break;
 		}
@@ -332,7 +332,7 @@ class ContentFacebookGallery extends \ContentElement
 			'app_id' => \FacebookJSSDK::getAppId(),
 			'app_secret' => \FacebookJSSDK::getAppSecret(),
 			'default_graph_version' => \FacebookJSSDK::getAppVersion(),
-			'default_access_token' => $facebookApp->getAccessToken(),
+			'default_access_token' => $this->fbAlbumAccessToken ?: $facebookApp->getAccessToken(),
 		]);
 
 		return self::$fb;

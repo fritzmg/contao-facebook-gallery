@@ -23,3 +23,4 @@ $GLOBALS['TL_LANG']['tl_content']['fbAlbumSort_id_desc'] = 'ID (descending)';
 $GLOBALS['TL_LANG']['tl_content']['fbAlbumSort_time_asc'] = 'Time (ascending)';
 $GLOBALS['TL_LANG']['tl_content']['fbAlbumSort_time_desc'] = 'Time (descending)';
 $GLOBALS['TL_LANG']['tl_content']['fbAlbumTimeout'] = array('Cache timeout', 'Individual cache timeout in seconds. Cache will be circumvented when set to 0. The global cache timeout applies, if no value is present.');
+$GLOBALS['TL_LANG']['tl_content']['fbAlbumAccessToken'] = array('Access Token', 'Facebook Access Token with which you are able to access the album.');
