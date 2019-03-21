@@ -13,17 +13,20 @@ Simple extension to allow the integration of a Facebook album via a gallery cont
 
 In order to be able to use the content element, you need to create a [Facebook App](https://developers.facebook.com) first. Then you can define the Facebook App ID and App Secret in the system settings of Contao, or in the page root settings.
 
-Within the content element, you can simply provide the URL to the Facebook album, or its Facebook ID. 
+### Album ID
+
+Within the content element, you can simply provide the URL to the Facebook album, or its Facebook ID. If you provide the URL to the album, the album ID will be automatically extracted from the URL, if possible.
 
 ### Access token
 
 __Important:__ due to changes in Facebook's API in 2018 you can no longer access public albums of pages without a valid access token. Otherwise you would have to submit the _[Page Public Content Access](https://developers.facebook.com/docs/apps/review/feature/#reference-PAGES_ACCESS)_ app permission for review.
 
-Thus since version `1.5.0` you have the ability to set a Facebook access token for each album. You can use [this tutorial](https://medium.com/@Jenananthan/how-to-create-non-expiry-facebook-page-token-6505c642d0b1) on how to create an access token _that never expires_.
+Thus since version `1.5.0` you have the ability to set a Facebook access token for each album. You can use [this tutorial](https://sujipthapa.co/blog/generating-never-expiring-facebook-page-access-token) for example on how to create a Facebook Page access token _that never expires_. The basic steps are:
 
-_Note:_ in order for this to work, your Facebook App must have added the _Facebook Login_ Product and there the setting _Client OAuth Login_ must be enabled.
-
-![Facebook Login settings](https://github.com/inspiredminds/contao-facebook-gallery/raw/master/facebook-login-settings.png)
+1. Create a user access token for your Facebook App within Facebook's Graph Explorer. _Important:_ you **must** require the `manage_pages` _and_ the `publish_pages` permission. Otherwise you will be unable to generate an access token that never expires.
+2. Debug and extend the access token in Facebook's Access Token Debugger.
+3. Use the new access token in the Graph Explorer to make a query on `/me/accounts`.
+4. Copy the access token for the page from which you want to pull the album from and insert it into the content element.
 
 ### Image size
 
@@ -37,7 +40,7 @@ Since version `1.4.0` there is a sorting setting. Keep in mind that sorting by `
 
 ## Template data
 
-For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name. Since version `1.5.0` this also contains the Facebook link of the image.
+For each image of the gallery, there is additional data available via `$col->fbData`. For example `$col->fbData->id` contains the Facebook ID of the image and `$col->fbData->album->name` contains the Facebook album's name. Since version `1.5.0` the Facebook data also contains the Facebook link of the image.
 
 ## Notes
 
