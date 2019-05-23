@@ -378,6 +378,7 @@ class ContentFacebookGallery extends \ContentElement
 
 		// initialize album data
 		$objAlbumData = new \stdClass();
+		$objAlbumData->images = [];
 
 		try
 		{
